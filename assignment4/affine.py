@@ -26,7 +26,6 @@ def affine_encrypt(text, a, b, outputFile):
       file.write(cipherText)
 # --------------------------------------------------------------------------
 
-
 def extended_gcd(a, b):
   if (a == 0):
     return b, 0, 1
