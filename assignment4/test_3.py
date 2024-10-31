@@ -2,9 +2,6 @@ import sys
 from math import gcd
 import ast
 
-# Bảng mã 29 ký tự
-CODETABLE = "abcdefghijklmnopqrstuvwxyz,. "
-
 # Hàm tính nghịch đảo modulo
 def mod_inverse(a, m):
     for x in range(1, m):
@@ -12,20 +9,42 @@ def mod_inverse(a, m):
             return x
     return None
 
-# Hàm giải mã với khóa (a, b)
-def affine_decrypt(cipherText, a, b):
-    a_inv = mod_inverse(a, 29)
-    if a_inv is None:
-        return None
-    text = ""
-    for char in cipherText:
-        if char in CODETABLE:
-            num = CODETABLE.index(char)
-            decrypted_char = CODETABLE[(a_inv * (num - b)) % 29]
-            text += decrypted_char
-        else:
-            text += char
-    return text
+def extended_gcd(a, b):
+  if (a == 0):
+    return b, 0, 1
+  gcd, x1, y1 = extended_gcd(b % a, a)
+  x = y1 - (b // a) * x1
+  y = x1
+  return gcd, x, y
+
+def affine_decrypt(inputFile, a, b):
+  """
+  decrypts the given cipher, assuming it was encrypted using an affine
+  transformation key (a, b)
+  :param inputFile: str type; a string of input file name
+  :param a: int type; #integer satisfying gcd(a, 29) = 1.
+  :param b: int type; shift value
+  :return: str type; the decrypted message (as a string of uppercase letters)
+  """
+  # Read cipherText from file
+  with open(inputFile, "r") as file:
+    cipherText = file.read()
+  _, a_inv, _ = extended_gcd(a, 29) # a_inv holds the inverse of a under modulo 29
+  a_inv = a_inv % 29
+
+  codeTable = "abcdefghijklmnopqrstuvwxyz,. "
+  text = ""
+  for cipher in cipherText:
+    if cipher in codeTable:
+      # Convert letter to its corresponding number (‘A’=0, ‘B’=1, ‘C’=2 ...)
+      num = codeTable.index(cipher)
+      # Apply the affine_transformation-1: (a_*(C-b)) % 29
+      letter = codeTable[(a_inv * (num - b)) % 29]
+    else:
+      letter = cipher
+  # Append the letter to the text
+    text += letter
+  return text
 
 # Kiểm tra tính hợp lệ của mã nguồn Python
 def is_python_source(text):
@@ -72,6 +91,8 @@ if __name__ == "__main__":
     # Đọc nội dung mã hóa từ tệp
     with open(encrypted_file, "r") as file:
         cipherText = file.read()
+    
+    print("Ciphertext read from file:", cipherText)  # Debug line
     
     # Chọn hàm kiểm tra phù hợp
     if content_type == 'english':
